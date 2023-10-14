@@ -8,5 +8,4 @@ V2bX在Alpine上的一键脚本
 wget https://github.com/yuwan027/AlpineV2bX/raw/main/AlpineV2bX.sh && bash AlpineV2bX.sh
 ```
 ## ご連絡
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<i class="fab fa-telegram"></i> [Telegram](https://t.me/yuwansama)
+[Telegram](https://t.me/yuwansama)
