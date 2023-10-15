@@ -5,7 +5,7 @@ V2bX在Alpine上的一键脚本
 加了一点自己的小东西
 ## 如何运行？
 ```shell
-wget https://github.com/yuwan027/AlpineV2bX/raw/main/AlpineV2bX.sh && bash AlpineV2bX.sh
+wget https://github.com/yuwan027/AlpineV2bX/blob/master/AlpineV2bX.sh && bash AlpineV2bX.sh
 ```
 ## ご連絡
 [Telegram](https://t.me/yuwansama)
