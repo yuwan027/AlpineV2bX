@@ -9,7 +9,7 @@ wget https://raw.githubusercontent.com/yuwan027/AlpineV2bX/master/AlpineV2bX.sh 
 ```
 对于不正常的ARM服务器 如甲骨文小鸡
 ```shell
-wget https://raw.githubusercontent.com/yuwan027/AlpineV2bX/master/AlpineARMV2bX.sh && bash AlpineV2bX.sh
+wget https://raw.githubusercontent.com/yuwan027/AlpineV2bX/master/AlpineARMV2bX.sh && bash AlpineARMV2bX.sh
 ```
 ## 支持功能
 1.自动从v2fly更新 geosite 和 geoip  
