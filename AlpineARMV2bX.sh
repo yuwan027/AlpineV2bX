@@ -544,7 +544,7 @@ read -p "确定要卸载 V2bX 吗? (y/n): " uninstall_choice
 3)
 
 		# 核心选择
-		read -rp "请输入机场网址：" ApiHost
+		read -rp "请输入机场网址(需要带上https:\\或http:\\)：" ApiHost
         read -rp "请输入面板对接API Key：" ApiKey
 		echo -e "${green}请选择节点核心类型：${plain}"
     echo -e "${green}1. xray${plain}"
