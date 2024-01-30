@@ -45,45 +45,84 @@ echo -e "${green}你选择了安装V2bX${plain}"
         apk add unzip wget curl openrc jq bash
         # 创建目录
         mkdir /etc/V2bX
+        # 检测架构
+        arch=$(arch)
+
+        if [[ $arch == "x86_64" || $arch == "x64" || $arch == "amd64" ]]; then
+            arch="64"
+        elif [[ $arch == "aarch64" || $arch == "arm64" ]]; then
+            arch="arm64-v8a"
+        elif [[ $arch == "s390x" ]]; then
+            arch="s390x"
+        else
+            arch="64"
+            echo -e "${red}检测架构失败，使用默认架构: ${arch}${plain}"
+        fi
         # 下载编译好的V2bX (2024/1/24更新为Xiao的修改版V2bX)
-        wget -P /etc/V2bX https://github.com/wyx2685/V2bX/releases/download/v0.0.0-20240122/V2bX-linux-64.zip
-        unzip /etc/V2bX/V2bX-linux-64.zip -d /etc/V2bX
-        # 自动更新并验证geosite&geoip的哈希 源自 https://github.com/XTLS/Xray-core/issues/1406#issuecomment-1341865177
-        LIST=('geoip geoip geoip' 'domain-list-community dlc geosite')
+        if  [ $# == 0 ] ;then
+                last_version=$(curl -Ls "https://api.github.com/repos/wyx2685/V2bX/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+                if [[ ! -n "$last_version" ]]; then
+                    echo -e "${red}检测 V2bX 版本失败，默认采用2024年1月28日版本${plain}"
+                    last_version=v0.0.1-20240128
+                fi
+                echo -e "${green}检测到 V2bX 最新版本：${last_version}，开始安装${plain}"
+                wget -q -N --no-check-certificate -O '/etc/V2bX/V2bX-linux.zip' https://github.com/wyx2685/V2bX/releases/download/${last_version}/V2bX-linux-${arch}.zip
+                if [[ $? -ne 0 ]]; then
+                    echo -e "${red}下载 V2bX 失败，请确保你的服务器能够下载 Github 的文件${plain}"
+                    exit 1
+                fi
+            fi
+ 
+                unzip /etc/V2bX/V2bX-linux.zip -d /etc/V2bX
+# 自动更新并验证geosite&geoip的哈希
+LIST=('geoip geoip geoip' 'domain-list-community dlc geosite')
 
-    INFO=($(echo $i | awk 'BEGIN{FS=" ";OFS=" "} {print $1,$2,$3}'))
+INFO=($(echo $i | awk 'BEGIN{FS=" ";OFS=" "} {print $1,$2,$3}'))
 
-    LASTEST_TAG="$(curl -sL "https://api.github.com/repos/v2fly/${INFO[0]}/releases" | jq -r ".[0].tag_name" || echo "latest")"
+GEOIP_DEFAULT_VERSION="202401250041"
+GEOSITE_DEFAULT_VERSION="20240129100418"
 
-    echo "当前文件更新时间: $LASTEST_TAG"
+LASTEST_TAG="$(curl -sL "https://api.github.com/repos/v2fly/${INFO[0]}/releases" | jq -r ".[0].tag_name" || echo "latest")"
 
-    GEOIP_FILE="/etc/V2bX/geoip.dat"
-    GEOSITE_FILE="/etc/V2bX/geosite.dat"
+# 检查是否因为 API 速率限制而失败
+if [[ "$LASTEST_TAG" == *"latest"* ]]; then
+    echo -e "${red}您的服务器受到Github API速率限制，采用默认老版本${plain}"
+LASTEST_TAG_geoip=202401250041
+LASTEST_TAG_geosite=20240129100418
+else
+LASTEST_TAG_geoip=$LASTEST_TAG
+LASTEST_TAG_geosite=$LASTEST_TAG
+echo -e "${green}当前文件更新时间: $LASTEST_TAG ${plain}"
+fi
 
-    echo -e "正在下载 ${GEOIP_FILE}..."
-    curl -L "https://github.com/v2fly/${INFO[0]}/releases/download/${LASTEST_TAG}/${INFO[1]}.dat" -o ${GEOIP_FILE}
+GEOIP_FILE="/etc/V2bX/geoip.dat"
+GEOSITE_FILE="/etc/V2bX/geosite.dat"
 
-    echo -e "正在下载 ${GEOSITE_FILE}..."
-    curl -L "https://github.com/v2fly/${INFO[0]}/releases/download/${LASTEST_TAG}/${INFO[1]}.dat" -o ${GEOSITE_FILE}
+echo -e "正在下载 ${GEOIP_FILE}..."
+curl -L "https://github.com/v2fly/${INFO[0]}/releases/download/${LASTEST_TAG_geoip}/${INFO[1]}.dat" -o ${GEOIP_FILE}
 
-    echo -e "正在验证哈希值..."
-    GEOIP_HASH="$(curl -sL "https://github.com/v2fly/${INFO[0]}/releases/download/${LASTEST_TAG}/${INFO[1]}.dat.sha256sum" | awk -F ' ' '{print $1}')"
-    GEOSITE_HASH="$(curl -sL "https://github.com/v2fly/${INFO[0]}/releases/download/${LASTEST_TAG}/${INFO[1]}.dat.sha256sum" | awk -F ' ' '{print $1}')"
+echo -e "正在下载 ${GEOSITE_FILE}..."
+curl -L "https://github.com/v2fly/${INFO[0]}/releases/download/${LASTEST_TAG_geosite}/${INFO[2]}.dat" -o ${GEOSITE_FILE}
 
-    GEOIP_CHECKSUM="$(sha256sum ${GEOIP_FILE} | awk -F ' ' '{print $1}')"
-    GEOSITE_CHECKSUM="$(sha256sum ${GEOSITE_FILE} | awk -F ' ' '{print $1}')"
+echo -e "正在验证哈希值..."
+GEOIP_HASH="$(curl -sL "https://github.com/v2fly/${INFO[0]}/releases/download/${LASTEST_TAG}/${INFO[1]}.dat.sha256sum" | awk -F ' ' '{print $1}')"
+GEOSITE_HASH="$(curl -sL "https://github.com/v2fly/${INFO[0]}/releases/download/${LASTEST_TAG}/${INFO[2]}.dat.sha256sum" | awk -F ' ' '{print $1}')"
 
-    if [ "$GEOIP_CHECKSUM" == "$GEOIP_HASH" ]; then
-        echo "已验证 ${GEOIP_FILE} 的哈希值."
-    else
-        echo -e "${GEOIP_FILE} 的哈希值与云端不匹配，能用就行，跳过验证。"
-    fi
+GEOIP_CHECKSUM="$(sha256sum ${GEOIP_FILE} | awk -F ' ' '{print $1}')"
+GEOSITE_CHECKSUM="$(sha256sum ${GEOSITE_FILE} | awk -F ' ' '{print $1}')"
 
-    if [ "$GEOSITE_CHECKSUM" == "$GEOSITE_HASH" ]; then
-        echo "已验证 ${GEOSITE_FILE} 的哈希值."
-    else
-        echo -e "${GEOSITE_FILE} 的哈希值与云端不匹配，能用就行，跳过验证。"
-    fi
+if [ "$GEOIP_CHECKSUM" == "$GEOIP_HASH" ]; then
+    echo "已验证 ${GEOIP_FILE} 的哈希值."
+else
+    echo -e "${GEOIP_FILE} 的哈希值与云端不匹配，能用就行，跳过验证。"
+fi
+
+if [ "$GEOSITE_CHECKSUM" == "$GEOSITE_HASH" ]; then
+    echo "已验证 ${GEOSITE_FILE} 的哈希值."
+else
+    echo -e "${GEOSITE_FILE} 的哈希值与云端不匹配，能用就行，跳过验证。"
+fi
+
 
         # 创建软链接
         ln -s /etc/V2bX/V2bX /usr/bin/V2bX
@@ -127,7 +166,7 @@ EOF
 	case "$if_generate" in
 	y|Y )
 		# 核心选择
-		read -rp "请输入机场网址(需要带上https:\\或者http:\\)：" ApiHost
+		read -rp "请输入机场网址(需要带上https或http)：" ApiHost
         read -rp "请输入面板对接API Key：" ApiKey
 		echo -e "${green}请选择节点核心类型：${plain}"
     echo -e "${green}1. xray${plain}"
@@ -338,7 +377,6 @@ esac
     "Nodes": [{$node_config}]
 }
 EOF
-
     # 创建 custom_outbound.json 文件
     cat <<EOF > /etc/V2bX/custom_outbound.json
     [
@@ -517,7 +555,6 @@ EOF
   }
 }
 EOF
-
 echo -e "${green}V2bX 配置文件生成完成,正在重新启动服务,您原先的配置被被分到config.json.bak${plain}"	
 echo -e "${green}再次运行 bash AlpineV2bX.sh${plain}"
 rc-service V2bX restart
@@ -757,7 +794,6 @@ esac
     "Nodes": [{$node_config}]
 }
 EOF
-
     # 创建 custom_outbound.json 文件
     cat <<EOF > /etc/V2bX/custom_outbound.json
     [
@@ -936,7 +972,6 @@ EOF
   }
 }
 EOF
-
 echo -e "${green}V2bX 配置文件生成完成,正在重新启动服务,您原先的配置被被分到config.json.bak${plain}"	
 echo -e "${green}再次运行 bash AlpineV2bX.sh${plain}"
 rc-service V2bX restart
@@ -944,7 +979,7 @@ rc-service V2bX restart
 ;;
 4)
 
-rc-service restart V2bX
+rc-service V2bX restart
 
 ;;
 esac
