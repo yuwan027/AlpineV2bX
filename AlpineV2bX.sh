@@ -75,38 +75,33 @@ echo -e "${green}你选择了安装V2bX${plain}"
  
                 unzip /etc/V2bX/V2bX-linux.zip -d /etc/V2bX
 # 自动更新并验证geosite&geoip的哈希
-LIST=('geoip geoip geoip' 'domain-list-community dlc geosite')
+GEOIP_DEFAULT_VERSION="202402010040"
+GEOSITE_DEFAULT_VERSION="20240131105845"
 
-INFO=($(echo $i | awk 'BEGIN{FS=" ";OFS=" "} {print $1,$2,$3}'))
-
-GEOIP_DEFAULT_VERSION="202401250041"
-GEOSITE_DEFAULT_VERSION="20240129100418"
-
-LASTEST_TAG="$(curl -sL "https://api.github.com/repos/v2fly/${INFO[0]}/releases" | jq -r ".[0].tag_name" || echo "latest")"
-
+LASTEST_TAG_geoip="$(curl -sL "https://api.github.com/repos/v2fly/geoip/releases" | jq -r ".[0].tag_name")"
+LASTEST_TAG_geosite="$(curl -sL "https://api.github.com/repos/v2fly/domain-list-community/releases" | jq -r ".[0].tag_name")"
 # 检查是否因为 API 速率限制而失败
-if [[ "$LASTEST_TAG" == *"latest"* ]]; then
+if [[ "$LASTEST_TAG_geoip" != "20"* ]]; then
     echo -e "${red}您的服务器受到Github API速率限制，采用默认老版本${plain}"
-LASTEST_TAG_geoip=202401250041
-LASTEST_TAG_geosite=20240129100418
+LASTEST_TAG_geoip=$GEOIP_DEFAULT_VERSION
+LASTEST_TAG_geosite=$GEOSITE_DEFAULT_VERSION
 else
-LASTEST_TAG_geoip=$LASTEST_TAG
-LASTEST_TAG_geosite=$LASTEST_TAG
-echo -e "${green}当前文件更新时间: $LASTEST_TAG ${plain}"
+echo -e "${green}当前geoip.dat文件更新时间: $LASTEST_TAG_geoip ${plain}"
+echo -e "${green}当前geosite.dat文件更新时间: $LASTEST_TAG_geosite ${plain}"
 fi
 
 GEOIP_FILE="/etc/V2bX/geoip.dat"
 GEOSITE_FILE="/etc/V2bX/geosite.dat"
 
 echo -e "正在下载 ${GEOIP_FILE}..."
-curl -L "https://github.com/v2fly/${INFO[0]}/releases/download/${LASTEST_TAG_geoip}/${INFO[1]}.dat" -o ${GEOIP_FILE}
+curl -L  -o ${GEOIP_FILE} "https://github.com/v2fly/geoip/releases/download/${LASTEST_TAG_geoip}/geoip.dat"
 
 echo -e "正在下载 ${GEOSITE_FILE}..."
-curl -L "https://github.com/v2fly/${INFO[0]}/releases/download/${LASTEST_TAG_geosite}/${INFO[2]}.dat" -o ${GEOSITE_FILE}
+curl -L -o ${GEOSITE_FILE} "https://github.com/v2fly/domain-list-community/releases/download/${LASTEST_TAG_geosite}/dlc.dat" 
 
 echo -e "正在验证哈希值..."
-GEOIP_HASH="$(curl -sL "https://github.com/v2fly/${INFO[0]}/releases/download/${LASTEST_TAG}/${INFO[1]}.dat.sha256sum" | awk -F ' ' '{print $1}')"
-GEOSITE_HASH="$(curl -sL "https://github.com/v2fly/${INFO[0]}/releases/download/${LASTEST_TAG}/${INFO[2]}.dat.sha256sum" | awk -F ' ' '{print $1}')"
+GEOIP_HASH="$(curl -sL "https://github.com/v2fly/geoip/releases/download/${LASTEST_TAG_geoip}/geoip.dat.sha256sum" | awk -F ' ' '{print $1}')"
+GEOSITE_HASH="$(curl -sL "https://github.com/v2fly/domain-list-community/releases/download/${LASTEST_TAG_geosite}/dlc.dat.sha256sum" | awk -F ' ' '{print $1}')"
 
 GEOIP_CHECKSUM="$(sha256sum ${GEOIP_FILE} | awk -F ' ' '{print $1}')"
 GEOSITE_CHECKSUM="$(sha256sum ${GEOSITE_FILE} | awk -F ' ' '{print $1}')"
