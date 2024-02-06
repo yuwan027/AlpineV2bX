@@ -8,7 +8,7 @@ plain='\033[0m'
 
 # Display the header
 echo -e "${green}#####################################"
-echo -e "##  AlpineV2bX 一键脚本 By ${plain}${red}Yuwan${plain} ${green}##"
+echo -e "######  AlpineV2bX 基于Unoffical V2board配套V2bX ######"
 echo -e "#####################################${plain}"
 
 # 菜单
