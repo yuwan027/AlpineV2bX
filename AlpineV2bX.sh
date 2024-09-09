@@ -127,25 +127,27 @@ fi
 
 depend() {
     need net
+    after sshd
+    after crond
 }
 
 start() {
     ebegin "Starting V2bX"
-    start-stop-daemon --start --exec /usr/bin/V2bX server
+    start-stop-daemon --start --exec /usr/bin/V2bX server --background
     eend $?
 }
 
 stop() {
     ebegin "Stopping V2bX"
-    start-stop-daemon --stop --exec /usr/bin/V2bX
+    start-stop-daemon --stop --exec /usr/bin/V2bX server
     eend $?
 }
 
 restart() {
     ebegin "Restarting V2bX"
-    start-stop-daemon --stop --exec /usr/bin/V2bX
+    start-stop-daemon --stop --exec /usr/bin/V2bX server
     sleep 1
-    start-stop-daemon --start --exec /usr/bin/V2bX server
+    start-stop-daemon --start --exec /usr/bin/V2bX server --background
     eend $?
 }
 EOF
